@@ -20,13 +20,13 @@
 Utility functions for ESX Networking.
 """
 
-from nova import exception
-from nova.openstack.common import log as logging
-from nova.virt.vmwareapi import error_util
-from nova.virt.vmwareapi import vim_util
-from nova.virt.vmwareapi import vm_util
+import logging
+import error_util
+import vim_util
+import vm_util
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger()
+LOG.addHandler(logging.StreamHandler())
 
 
 def get_network_with_the_name(session, network_name="vmnet0", cluster=None):
@@ -135,10 +135,9 @@ def get_vlanid_and_vswitch_for_portgroup(session, pg_name, cluster=None):
                 "get_dynamic_property", host_mor,
                 "HostSystem", "config.network.portgroup")
     if not port_grps_on_host_ret:
-        msg = _("ESX SOAP server returned an empty port group "
-                "for the host system in its response")
-        LOG.error(msg)
-        raise exception.NovaException(msg)
+        LOG.error("ESX SOAP server returned an empty port group "
+                  "for the host system in its response")
+        raise Exception(msg)
     port_grps_on_host = port_grps_on_host_ret.HostPortGroup
     for p_gp in port_grps_on_host:
         if p_gp.spec.name == pg_name:
@@ -161,8 +160,6 @@ def create_port_group(session, pg_name, vswitch_name, vlan_id=0, cluster=None):
     network_system_mor = session._call_method(vim_util,
         "get_dynamic_property", host_mor,
         "HostSystem", "configManager.networkSystem")
-    LOG.debug(_("Creating Port Group with name %s on "
-                "the ESX host") % pg_name)
     try:
         session._call_method(session._get_vim(),
                 "AddPortGroup", network_system_mor,
@@ -174,6 +171,4 @@ def create_port_group(session, pg_name, vswitch_name, vlan_id=0, cluster=None):
         # concerned with the port group being created, which is done
         # by the other call, we can ignore the exception.
         if error_util.FAULT_ALREADY_EXISTS not in exc.fault_list:
-            raise exception.NovaException(exc)
-    LOG.debug(_("Created Port Group with name %s on "
-                "the ESX host") % pg_name)
+            raise Exception(exc)
