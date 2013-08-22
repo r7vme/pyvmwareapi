@@ -44,16 +44,17 @@ class VMwareESXDriver:
         """List VM instances."""
         return self._vmops.list_instances()
 
-    def spawn(self, instance, disk_size,
-              network_info=None, block_device_info=None):
+    def spawn(self, instance, disk_size, network_info=None):
         """Create VM instance."""
-        self._vmops.spawn(instance, disk_size, network_info,
-                          block_device_info)
+        self._vmops.spawn(instance, disk_size, network_info)
 
-    def destroy(self, instance, network_info, block_device_info=None,
-                destroy_disks=True):
+    def reboot(self, instance):
+        """Reboot VM instance."""
+        self._vmops.reboot(instance)
+
+    def destroy(self, instance, destroy_disks=True):
         """Destroy VM instance."""
-        self._vmops.destroy(instance, network_info, destroy_disks)
+        self._vmops.destroy(instance, destroy_disks)
 
     def get_info(self, instance):
         """Return info about the VM instance."""

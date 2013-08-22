@@ -76,7 +76,7 @@ class VMwareVMOps(object):
         """
         vm_ref = vm_util.get_vm_ref_from_name(self._session, instance['name'])
         if vm_ref:
-            raise Exception('VM exists %s' % instance['name'])
+            raise Exception('VM "%s" exists' % instance['name'])
 
         client_factory = self._session._get_vim().client.factory
         service_content = self._session._get_vim().get_service_content()
@@ -239,13 +239,11 @@ class VMwareVMOps(object):
             self._session._wait_for_task(instance['name'], power_on_task)
         _power_on_vm()
 
-    def reboot(self, instance, network_info):
+    def reboot(self, instance):
         """Reboot a VM instance."""
         vm_ref = vm_util.get_vm_ref_from_name(self._session, instance['name'])
         if vm_ref is None:
-            raise exception.InstanceNotFound(instance_id=instance['uuid'])
-
-        self.plug_vifs(instance, network_info)
+            raise Exception('VM "%s" not found.' % instance['name'])
 
         lst_properties = ["summary.guest.toolsStatus", "runtime.powerState",
                           "summary.guest.toolsRunningStatus"]
@@ -266,8 +264,7 @@ class VMwareVMOps(object):
 
         # Raise an exception if the VM is not powered On.
         if pwr_state not in ["poweredOn"]:
-            reason = _("instance is not powered on")
-            raise exception.InstanceRebootFailure(reason=reason)
+            raise Exception("Instance not powered on.")
 
         # If latest vmware tools are installed in the VM, and that the tools
         # are running, then only do a guest reboot. Otherwise do a hard reset.
@@ -278,37 +275,9 @@ class VMwareVMOps(object):
         else:
             reset_task = self._session._call_method(self._session._get_vim(),
                                                     "ResetVM_Task", vm_ref)
-            self._session._wait_for_task(instance['uuid'], reset_task)
+            self._session._wait_for_task(instance['name'], reset_task)
 
-    def _delete(self, instance, network_info):
-        """
-        Destroy a VM instance. Steps followed are:
-        1. Power off the VM, if it is in poweredOn state.
-        2. Destroy the VM.
-        """
-        try:
-            vm_ref = vm_util.get_vm_ref_from_name(self._session,
-                                                  instance['name'])
-            if vm_ref is None:
-                return
-
-            self.power_off(instance)
-
-            try:
-                destroy_task = self._session._call_method(
-                    self._session._get_vim(),
-                    "Destroy_Task", vm_ref)
-                self._session._wait_for_task(instance['uuid'], destroy_task)
-            except Exception, excep:
-                LOG.warn("In vmwareapi:vmops:delete, got this exception"
-                           " while destroying the VM: %s" % str(excep))
-
-            if network_info:
-                self.unplug_vifs(instance, network_info)
-        except Exception, exc:
-            raise exc
-
-    def destroy(self, instance, network_info, destroy_disks=True):
+    def destroy(self, instance, destroy_disks=True):
         """
         Destroy a VM instance. Steps followed are:
         1. Power off the VM, if it is in poweredOn state.
@@ -340,7 +309,7 @@ class VMwareVMOps(object):
                 poweroff_task = self._session._call_method(
                        self._session._get_vim(),
                        "PowerOffVM_Task", vm_ref)
-                self._session._wait_for_task(instance['uuid'], poweroff_task)
+                self._session._wait_for_task(instance['name'], poweroff_task)
 
             # Un-register the VM
             try:
@@ -349,9 +318,6 @@ class VMwareVMOps(object):
             except Exception, excep:
                 LOG.warn("In vmwareapi:vmops:destroy, got this exception"
                            " while un-registering the VM: %s" % str(excep))
-
-            if network_info:
-                self.unplug_vifs(instance, network_info)
 
             # Delete the folder holding the VM related content on
             # the datastore.
@@ -367,7 +333,7 @@ class VMwareVMOps(object):
                         vim.get_service_content().fileManager,
                         name=dir_ds_compliant_path,
                         datacenter=self._get_datacenter_ref_and_name()[0])
-                    self._session._wait_for_task(instance['uuid'], delete_task)
+                    self._session._wait_for_task(instance['name'], delete_task)
                 except Exception, excep:
                     LOG.warn("In vmwareapi:vmops:destroy, "
                                  "got this exception while deleting"
@@ -383,7 +349,7 @@ class VMwareVMOps(object):
         """Return data about the VM instance."""
         vm_ref = vm_util.get_vm_ref_from_name(self._session, instance['name'])
         if vm_ref is None:
-            raise exception.InstanceNotFound(instance_id=instance['name'])
+            raise Exception('VM "%s" not found.' % instance['name'])
 
         lst_properties = ["summary.config.numCpu",
                     "summary.config.memorySizeMB",
@@ -402,7 +368,7 @@ class VMwareVMOps(object):
                     # In MB, but we want in KB
                     max_mem = int(prop.val) * 1024
                 elif prop.name == "runtime.powerState":
-                    pwr_state = VMWARE_POWER_STATES[prop.val]
+                    pwr_state = prop.val
 
         return {'state': pwr_state,
                 'max_mem': max_mem,
