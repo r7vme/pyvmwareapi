@@ -1,0 +1,4 @@
+This is the PyVMWAREAPI module. Main aim is ability to simply
+create, destroy, reboot VMs under ESXi. 
+
+Code based on OpenStack 'vmwareapi' driver.
