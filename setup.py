@@ -24,4 +24,4 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Environment :: No Input/Output (Daemon)',
     ],
-    scripts=['bin/test.py'])
+    scripts=['bin/pyvmwareapi'])

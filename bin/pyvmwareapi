@@ -1,0 +1,75 @@
+#!/usr/bin/env python2
+
+import sys, argparse
+from pyvmwareapi.driver import VMwareESXDriver
+
+def parse_network_config(netconfig):
+    # network manifestation format : --network 00:11:22:33:44:55, pgtest, 400; 00:11:22:33:44:55, pgtest, 400;
+    networks = []
+    for items in netconfig.split(';')[0:len(netconfig.split(';'))-1]:
+        single_network = {}
+        network_param = items.split(',')
+        single_network['address'] = network_param[0]
+        single_network['pg'] = network_param[1]
+        single_network['vlan'] = network_param[2]
+        print str(single_network)
+        networks.append(single_network)
+    return networks
+
+def spawn_vm(host, user, password, netconfig, name, vcpus, memory, disk):
+    esxi = VMwareESXDriver(host, user, password)
+    instance = {'name' : name, 'vcpus' : vcpus, 'memory_mb' : memory}
+    esxi.spawn(instance, disk, netconfig)
+
+def add_auth_args(subparser):
+    subparser.add_argument('-H','--host', help='VMWare host', required=True)
+    subparser.add_argument('-U','--user', help='VMWare username', required=True)
+    subparser.add_argument('-P','--password', help='VMWare password', required=True)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = 'PyVmWareAPI Command Line Interface')
+    subparsers = parser.add_subparsers(help='List of available actions')
+    # args for action "spawn"
+    spawn_parser = subparsers.add_parser('spawn', help='Spawn VM')
+    add_auth_args(spawn_parser)
+    spawn_parser.add_argument('-n','--network',
+                              help='Network configuration in format: --network 00:11:22:33:44:55, pgtest, 400; 00:11:22:33:44:55, pgtest, 400;',
+                              required=True)
+    spawn_parser.add_argument('-N','--name', help='Instance name', required=True)
+    spawn_parser.add_argument('-v','--vcpus', help='VCPUs count', required=True)
+    spawn_parser.add_argument('-m','--memory', help='Allocated RAM in MB', required=True)
+    spawn_parser.add_argument('-d','--disk', help='Allocated disk size in bytes', required=True)
+    # args for action "list"
+    list_parser = subparsers.add_parser('list', help='Show list of existing VMs')
+    add_auth_args(list_parser)
+    # args for action "reboot"
+    reboot_parser = subparsers.add_parser('reboot', help='Reboot VM')
+    add_auth_args(reboot_parser)
+    reboot_parser.add_argument('-n','--name', help='Instance name to reboot', required=True)
+    # args for action "destroy"
+    destroy_parser = subparsers.add_parser('destroy', help='Destroy VM')
+    add_auth_args(destroy_parser)
+    destroy_parser.add_argument('-n','--name', help='Instance name to destroy', required=True)
+
+    args = parser.parse_args()
+
+    if sys.argv[1] == 'spawn':
+        network_config = parse_network_config(args.network)
+        spawn_vm(args.host, args.user, args.password, network_config, args.name, args.vcpus, args.memory, int(args.disk))
+    elif sys.argv[1] == 'list':
+        esxi = VMwareESXDriver(args.host, args.user, args.password)
+        print esxi.list_instances()
+    elif sys.argv[1] == 'reboot':
+        esxi = VMwareESXDriver(args.host, args.user, args.password)
+        esxi.reboot({'name' : args.name})
+    elif sys.argv[1] == 'destroy':
+        esxi = VMwareESXDriver(args.host, args.user, args.password)
+        esxi.destroy({'name' : args.name})
+
+# DEFAULT SPAWN EXAMPLE
+# if __name__=="__main__":
+#    esxi = VMwareESXDriver('172.18.210.165','root','Mirantis01')
+#    network_info = [{'address':'00:11:22:33:44:55', 'pg':'pgtest', 'vlan':'400'}]
+#    instance = {'name':'testvm','vcpus':'1','memory_mb':'1024'}
+#    disk_size = 10737418240
+#    esxi.spawn(instance, disk_size, network_info)
