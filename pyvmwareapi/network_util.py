@@ -10,7 +10,6 @@ import vim_util
 import vm_util
 
 LOG = logging.getLogger()
-LOG.addHandler(logging.StreamHandler())
 
 
 def get_network_with_the_name(session, network_name="vmnet0", cluster=None):
@@ -39,7 +38,6 @@ def get_network_with_the_name(session, network_name="vmnet0", cluster=None):
                        "get_properties_for_a_collection_of_objects",
                        "Network", vm_networks, ["summary.name"])
     network_obj = {}
-    LOG.warn(vm_networks)
     for network in vm_networks:
         # Get network properties
         if network._type == 'DistributedVirtualPortgroup':

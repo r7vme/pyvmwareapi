@@ -18,7 +18,6 @@ import utils
 import volumeops
 
 LOG = logging.getLogger()
-LOG.addHandler(logging.StreamHandler())
 
 TIME_BETWEEN_API_CALL_RETRIES = 2.0
 API_RETRY_COUNT = 10

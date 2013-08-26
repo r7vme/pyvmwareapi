@@ -14,7 +14,6 @@ import vim_util
 import vm_util
 
 LOG = logging.getLogger()
-LOG.addHandler(logging.StreamHandler())
 
 VMWARE_PREFIX = 'vmware'
 RESIZE_TOTAL_STEPS = 4

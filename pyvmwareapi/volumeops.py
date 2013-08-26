@@ -9,7 +9,6 @@ import vim_util
 import vm_util
 
 LOG = logging.getLogger()
-LOG.addHandler(logging.StreamHandler())
 
 
 class VMwareVolumeOps(object):
