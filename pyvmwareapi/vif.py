@@ -10,6 +10,10 @@ def ensure_vlan_bridge(session, vif, cluster=None):
     vlan_num = vif['vlan']
     bridge = vif['pg']
     vlan_interface = 'vmnic0'
+    if 'promiscuous_mode' in vif:
+        promiscuous_mode = vif['promiscuous_mode']
+    else:
+        promiscuous_mode = False
 
     # Check if the vlan_interface physical network adapter exists on the
     # host.
@@ -33,4 +37,4 @@ def ensure_vlan_bridge(session, vif, cluster=None):
         # host.
         network_util.create_port_group(session, bridge,
                                        vswitch_associated, vlan_num,
-                                       cluster)
+                                       cluster, promiscuous_mode)

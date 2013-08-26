@@ -127,7 +127,8 @@ def get_vlanid_and_vswitch_for_portgroup(session, pg_name, cluster=None):
             return p_gp.spec.vlanId, p_grp_vswitch_name
 
 
-def create_port_group(session, pg_name, vswitch_name, vlan_id=0, cluster=None):
+def create_port_group(session, pg_name, vswitch_name, vlan_id=0,
+                      cluster=None, promiscuous_mode=None):
     """
     Creates a port group on the host system with the vlan tags
     supplied. VLAN id 0 means no vlan id association.
@@ -137,7 +138,8 @@ def create_port_group(session, pg_name, vswitch_name, vlan_id=0, cluster=None):
                     client_factory,
                     vswitch_name,
                     pg_name,
-                    vlan_id)
+                    vlan_id,
+                    promiscuous_mode)
     host_mor = vm_util.get_host_ref(session, cluster)
     network_system_mor = session._call_method(vim_util,
         "get_dynamic_property", host_mor,

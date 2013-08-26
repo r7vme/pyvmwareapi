@@ -412,7 +412,8 @@ def get_machine_id_change_spec(client_factory, machine_id_str):
 
 
 def get_add_vswitch_port_group_spec(client_factory, vswitch_name,
-                                    port_group_name, vlan_id):
+                                    port_group_name, vlan_id,
+                                    promiscuous_mode=None):
     """Builds the virtual switch port group add spec."""
     vswitch_port_group_spec = client_factory.create('ns0:HostPortGroupSpec')
     vswitch_port_group_spec.name = port_group_name
@@ -425,6 +426,11 @@ def get_add_vswitch_port_group_spec(client_factory, vswitch_name,
     nicteaming = client_factory.create('ns0:HostNicTeamingPolicy')
     nicteaming.notifySwitches = True
     policy.nicTeaming = nicteaming
+
+    if promiscuous_mode:
+        security = client_factory.create('ns0:HostNetworkSecurityPolicy')
+        security.allowPromiscuous = True
+        policy.security = security
 
     vswitch_port_group_spec.policy = policy
     return vswitch_port_group_spec
