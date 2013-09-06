@@ -29,7 +29,7 @@ Python module to use vmware API
 %{__python} setup.py install -O1 --skip-build --root %{buildroot}
 
 %files
-%{_bindir}/test.py
+%{_bindir}/pyvmwareapi
 %{python_sitelib}/pyvmwareapi
 %{python_sitelib}/*.egg-info
 
